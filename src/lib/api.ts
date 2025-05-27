@@ -37,7 +37,7 @@ export const getPlanById = async (id: string) => {
 
     const response = await fetch(`${API_URL}/plans/${id}`, {
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        'Authorization': `${session.access_token}`,
       },
     });
 

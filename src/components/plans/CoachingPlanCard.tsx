@@ -71,7 +71,7 @@ const CoachingPlanCard: React.FC<CoachingPlanCardProps> = ({ plan }) => {
       <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
         <button 
           className="w-full flex items-center justify-center text-sm font-medium text-teal-600 hover:text-teal-700"
-          onClick={() => navigate(`/plans/${plan.id}`)}
+          onClick={() => navigate(`/plan/${plan.id}`)}
         >
           <span>View Plan</span>
           <ChevronRight size={16} className="ml-1" />

@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Chat from './pages/Chat';
 import Progress from './pages/Progress';
 import Plans from './pages/Plans';
+import FullPlan from './components/FullPlan';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
               <Route path="/chat" element={<Chat />} />
               <Route path="/progress" element={<Progress />} />
               <Route path="/plans" element={<Plans />} />
+              <Route path="/plan/:planId" element={<FullPlan />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>

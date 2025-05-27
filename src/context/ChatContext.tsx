@@ -83,7 +83,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       if (planError) throw planError;
 
       const stepsToInsert = plan.steps.map((step: any) => ({
-        plan_id: planData.id || 'kekwekekekek',
+        plan_id: planData.id,
         title: step.title,
         description: step.description,
         order_number: step.order,

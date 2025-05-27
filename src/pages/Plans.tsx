@@ -1,13 +1,65 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useChat } from '../context/ChatContext';
 import { PlusCircle, Search } from 'lucide-react';
 import CoachingPlanCard from '../components/plans/CoachingPlanCard';
+import { getPlans } from '../lib/api';
+import { CoachingPlan } from '../types';
 
 const Plans: React.FC = () => {
+  const [plans, setPlans] = useState<CoachingPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { generatedPlans } = useChat();
-  
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const data = await getPlans();
+        // Transform the data to match the expected format
+        const transformedPlans = data.map(plan => ({
+          id: plan.id,
+          title: plan.title,
+          description: plan.description,
+          steps: plan.plan_steps.map(step => ({
+            id: step.id,
+            title: step.title,
+            description: step.description,
+            order: step.order_number,
+            completed: step.completed
+          })),
+          createdAt: new Date(plan.created_at),
+          goalId: plan.id // Using plan id as goalId since it's not in the API response
+        }));
+        setPlans(transformedPlans);
+      } catch (err) {
+        setError('Failed to fetch plans');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlans();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-600">Loading plans...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-600">Error: {error}</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Coaching Plans</h1>
@@ -39,18 +91,19 @@ const Plans: React.FC = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {generatedPlans.map(plan => (
+        {plans.map(plan => (
           <CoachingPlanCard key={plan.id} plan={plan} />
         ))}
         
-        {/* Placeholder for more plans */}
-        <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-gray-100 transition-colors cursor-pointer">
-          <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center mb-3">
-            <PlusCircle size={24} className="text-teal-600" />
+        {plans.length === 0 && (
+          <div className="col-span-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-gray-100 transition-colors cursor-pointer">
+            <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center mb-3">
+              <PlusCircle size={24} className="text-teal-600" />
+            </div>
+            <h3 className="font-medium text-gray-700 mb-1">Generate New Plan</h3>
+            <p className="text-sm text-gray-500">Get personalized guidance based on your goals</p>
           </div>
-          <h3 className="font-medium text-gray-700 mb-1">Generate New Plan</h3>
-          <p className="text-sm text-gray-500">Get personalized guidance based on your goals</p>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -2,14 +2,18 @@ import React from 'react';
 import { Clock, CheckCircle, ChevronRight } from 'lucide-react';
 import { CoachingPlan } from '../../types';
 import { formatDate } from '../../utils/helpers';
+import { useNavigate } from 'react-router-dom';
 
 interface CoachingPlanCardProps {
   plan: CoachingPlan;
 }
 
 const CoachingPlanCard: React.FC<CoachingPlanCardProps> = ({ plan }) => {
-  const completedSteps = plan.steps.filter(step => step.completed).length;
-  const totalSteps = plan.steps.length;
+  const navigate = useNavigate();
+  console.log(plan,'CoachingPlanCardProps')
+  const { plan_steps = [] } = plan;
+  const completedSteps = plan_steps.filter(step => step.completed).length;
+  const totalSteps = plan_steps.length;
   const progressPercentage = Math.round((completedSteps / totalSteps) * 100);
   
   return (
@@ -18,7 +22,7 @@ const CoachingPlanCard: React.FC<CoachingPlanCardProps> = ({ plan }) => {
         <h3 className="font-medium text-gray-900">{plan.title}</h3>
         <div className="flex items-center mt-1 text-xs text-gray-500">
           <Clock size={14} className="mr-1" />
-          <span>Created on {formatDate(plan.createdAt)}</span>
+          <span>Created on {formatDate(plan.created_at)}</span>
         </div>
       </div>
       
@@ -30,12 +34,12 @@ const CoachingPlanCard: React.FC<CoachingPlanCardProps> = ({ plan }) => {
             <span className="text-xs font-medium text-gray-700">
               {completedSteps} of {totalSteps} steps completed
             </span>
-            <span className="text-xs text-gray-500">{progressPercentage}%</span>
+            <span className="text-xs text-gray-500">{progressPercentage || 0}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
               className="h-2 rounded-full bg-teal-500" 
-              style={{ width: `${progressPercentage}%` }}
+              style={{ width: `${progressPercentage}` }}
             ></div>
           </div>
         </div>
@@ -65,7 +69,10 @@ const CoachingPlanCard: React.FC<CoachingPlanCardProps> = ({ plan }) => {
       </div>
       
       <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
-        <button className="w-full flex items-center justify-center text-sm font-medium text-teal-600 hover:text-teal-700">
+        <button 
+          className="w-full flex items-center justify-center text-sm font-medium text-teal-600 hover:text-teal-700"
+          onClick={() => navigate(`/plans/${plan.id}`)}
+        >
           <span>View Plan</span>
           <ChevronRight size={16} className="ml-1" />
         </button>

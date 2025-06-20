@@ -3,9 +3,12 @@ import { supabase } from './supabase';
 const API_URL = 'http://localhost:3001/api';
 
 export const getPlans = async () => {
+  console.log('getPlans')
   try {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    console.log(await supabase.auth.getSession(),'await supabase.auth.getSession()')
     if (sessionError || !session) {
+      console.log('session error')
       throw new Error('Not authenticated');
     }
 

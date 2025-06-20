@@ -54,7 +54,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const savePlanToDatabase = async (plan: any) => {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
+     
       if (userError || !user) {
         console.log('User not authenticated');
         return null;
@@ -118,7 +118,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       const isPlanRequest = content.toLowerCase().includes('plan') || 
                           content.toLowerCase().includes('routine') ||
                           content.toLowerCase().includes('help me');
-  
+      console.log(isPlanRequest,'isPlanRequest')
       if (isPlanRequest) {
         console.log('Plan request detected:', content);
         

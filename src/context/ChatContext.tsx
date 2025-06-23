@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, ReactNode, useCallback } fr
 import { ChatMessage, CoachingPlan } from '../types';
 import { generateUniqueId } from '../utils/helpers';
 import { generateResponse, generatePlan } from '../lib/gemini';
-import { supabase } from '../lib/supabase';
 
 interface ChatContextType {
   messages: ChatMessage[];
@@ -53,49 +52,12 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
   const savePlanToDatabase = async (plan: any) => {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-     
-      if (userError || !user) {
-        console.log('User not authenticated');
-        return null;
-      }
-      const { data: userData, error: Usererror } = await supabase
-        .from('users')
-        .insert({
-          id: user.id,
-        })
-        .select()
-        .single();
-    
-      const { data: planData, error: planError } = await supabase
-        .from('plans')
-        .insert({
-          title: plan.title,
-          description: plan.description,
-          is_ai_generated: true,
-          user_id: user.id,
-        })
-        .select()
-        .single();
-        
-
-
-      if (planError) throw planError;
-
-      const stepsToInsert = plan.steps.map((step: any) => ({
-        plan_id: planData.id,
-        title: step.title,
-        description: step.description,
-        order_number: step.order,
-      }));
-
-      const { error: stepsError } = await supabase
-        .from('plan_steps')
-        .insert(stepsToInsert);
-
-      if (stepsError) throw stepsError;
-
-      return planData;
+      // TODO: Replace with your backend API call
+      // Example:
+      // const response = await fetch('/api/plans', { method: 'POST', body: JSON.stringify(plan) });
+      // if (!response.ok) throw new Error('Failed to save plan');
+      // return await response.json();
+      throw new Error('savePlanToDatabase not implemented');
     } catch (error) {
       console.error('Error saving plan:', error);
       return null;

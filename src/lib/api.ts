@@ -1,22 +1,9 @@
-import { supabase } from './supabase';
-
 const API_URL = 'http://localhost:3001/api';
 
 export const getPlans = async () => {
   console.log('getPlans')
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    console.log(await supabase.auth.getSession(),'await supabase.auth.getSession()')
-    if (sessionError || !session) {
-      console.log('session error')
-      throw new Error('Not authenticated');
-    }
-
-    const response = await fetch(`${API_URL}/plans`, {
-      headers: {
-        'Authorization': `${session?.access_token}`,
-      },
-    });
+    const response = await fetch('http://localhost:3001/api/plans');
     console.log(response,'response')
 
     if (!response.ok) {
@@ -32,17 +19,7 @@ export const getPlans = async () => {
 
 export const getPlanById = async (id: string) => {
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError || !session) {
-      throw new Error('Not authenticated');
-    }
-
-    const response = await fetch(`${API_URL}/plans/${id}`, {
-      headers: {
-        'Authorization': `${session.access_token}`,
-      },
-    });
+    const response = await fetch(`${API_URL}/plans/${id}`);
 
     if (!response.ok) {
       throw new Error('Failed to fetch plan');

@@ -74,7 +74,19 @@ const FullPlan: React.FC = () => {
         };
       });
 
-    //   await updatePlanStep(planId, stepId, isCompleted);
+      // Update in database
+      const response = await fetch(`http://localhost:3001/api/plans/${planId}/steps/${stepId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ is_completed: isCompleted })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update step status');
+      }
+
     } catch (err) {
       console.error('Failed to update step status', err);
       // Revert optimistic update on error

@@ -21,8 +21,8 @@ function App() {
           <ChatProvider>
             <div className="min-h-screen bg-gray-50">
               <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<SignUp />} />
+                {/* <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<SignUp />} /> */}
                 <Route
                   path="/"
                   element={

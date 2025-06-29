@@ -11,35 +11,38 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Mock user data for development
+const mockUser = {
+  id: '1',
+  email: 'user@example.com',
+  user_metadata: {
+    avatar_url: null
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [session, setSession] = useState<any | null>(null);
-  const [user, setUser] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<any | null>({ user: mockUser });
+  const [user, setUser] = useState<any | null>(mockUser);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // TODO: Fetch session/user from your backend if needed
+    // Authentication is disabled - always set user as authenticated
     setLoading(false);
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    // TODO: Replace with your backend API call
-    // Example:
-    // const response = await fetch('/api/login', { method: 'POST', body: JSON.stringify({ email, password }) });
-    // if (!response.ok) throw new Error('Login failed');
-    // const data = await response.json();
-    // setSession(data.session); setUser(data.user);
-    throw new Error('signIn not implemented');
+    // Authentication disabled - do nothing
+    console.log('Login disabled for development');
   };
 
   const signUp = async (email: string, password: string) => {
-    // TODO: Replace with your backend API call
-    throw new Error('signUp not implemented');
+    // Authentication disabled - do nothing
+    console.log('Signup disabled for development');
   };
 
   const signOut = async () => {
-    // TODO: Replace with your backend API call
-    setSession(null);
-    setUser(null);
+    // Authentication disabled - do nothing
+    console.log('Logout disabled for development');
   };
 
   const value = {

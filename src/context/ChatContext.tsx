@@ -1,14 +1,24 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
-import { ChatMessage, CoachingPlan } from '../types';
+import { ChatMessage } from '../types';
 import { generateUniqueId } from '../utils/helpers';
 import { generateResponse, generatePlan } from '../lib/gemini';
+
+interface GeneratePlanResponse {
+  title: string;
+  description: string;
+  steps: Array<{
+    title: string;
+    description: string;
+    order: number;
+  }>;
+}
 
 interface ChatContextType {
   messages: ChatMessage[];
   isTyping: boolean;
-  sendMessage: (content: string) => void;
+  sendMessage: (content: string) => Promise<void>;
   clearMessages: () => void;
-  generatedPlans: CoachingPlan[];
+  generatedPlans: GeneratePlanResponse[];
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -23,7 +33,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     },
   ]);
   const [isTyping, setIsTyping] = useState(false);
-  const [generatedPlans, setGeneratedPlans] = useState<CoachingPlan[]>([]);
+  const [generatedPlans, setGeneratedPlans] = useState<GeneratePlanResponse[]>([]);
 
   const formatMessage = (content: string): string => {
     // Add emojis for common patterns
@@ -50,14 +60,29 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     return formatted;
   };
 
-  const savePlanToDatabase = async (plan: any) => {
+  const savePlanToDatabase = async (plan: GeneratePlanResponse) => {
     try {
-      // TODO: Replace with your backend API call
-      // Example:
-      // const response = await fetch('/api/plans', { method: 'POST', body: JSON.stringify(plan) });
-      // if (!response.ok) throw new Error('Failed to save plan');
-      // return await response.json();
-      throw new Error('savePlanToDatabase not implemented');
+      const response = await fetch('http://localhost:3001/api/plans', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: plan.title,
+          description: plan.description,
+          steps: plan.steps,
+          category: 'personal', // Default category, can be enhanced later
+          is_ai_generated: true
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save plan: ${response.statusText}`);
+      }
+
+      const savedPlan = await response.json();
+      console.log('Plan saved successfully:', savedPlan);
+      return savedPlan;
     } catch (error) {
       console.error('Error saving plan:', error);
       return null;
@@ -95,7 +120,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             if (savedPlan) {
               const formattedResponse = formatMessage(
                 `📋 I've created a plan for you: "${plan.title}"\n\n${plan.description}\n\n` +
-                `**Steps:**\n${plan.steps.map((step, index) => 
+                `**Steps:**\n${plan.steps.map((step) => 
                   `• ${step.title}: ${step.description}`
                 ).join('\n')}\n\n` +
                 `I've saved this plan to your Plans List, where you can view all the steps and track your progress.`
@@ -126,7 +151,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             // Still show the plan even if saving failed
             const formattedResponse = formatMessage(
               `📋 I've created a plan for you: "${plan.title}"\n\n${plan.description}\n\n` +
-              `**Steps:**\n${plan.steps.map((step, index) => 
+              `**Steps:**\n${plan.steps.map((step) => 
                 `• ${step.title}: ${step.description}`
               ).join('\n')}\n\n` +
               `Note: I couldn't save this plan to your database, but you can still use it from this conversation.`
@@ -208,40 +233,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
   
-  // Optional: Add a separate function to handle plan requests more cleanly
-  const handlePlanRequest = async (content: string): Promise<ChatMessage> => {
-    try {
-      const plan = await generatePlan(content);
-      
-      if (!plan || !plan.title || !plan.description || !Array.isArray(plan.steps)) {
-        throw new Error('Invalid plan structure received');
-      }
-      
-      const savedPlan = await savePlanToDatabase(plan);
-      
-      const baseMessage = `📋 I've created a plan for you: "${plan.title}"\n\n${plan.description}\n\n` +
-        `**Steps:**\n${plan.steps.map((step, index) => 
-          `• ${step.title}: ${step.description}`
-        ).join('\n')}\n\n`;
-      
-      const saveMessage = savedPlan 
-        ? `I've saved this plan to your Plans List, where you can view all the steps and track your progress.`
-        : `Note: I couldn't save this plan to your database, but you can still use it from this conversation.`;
-      
-      const formattedResponse = formatMessage(baseMessage + saveMessage);
-      
-      return {
-        id: generateUniqueId(),
-        sender: 'ai',
-        content: formattedResponse,
-        timestamp: new Date(),
-      };
-    } catch (error) {
-      console.error('Error handling plan request:', error);
-      throw error; // Re-throw to be handled by the main try-catch
-    }
-  };
-
   const clearMessages = useCallback(() => {
     setMessages([
       {

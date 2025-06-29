@@ -31,10 +31,14 @@ pool.on('connect', () => {
 });
 
 pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
+  console.error('Database connection error:', err);
 });
 
+// Test the connection
 pool.connect()
+  .then(() => console.log('Database connection test successful'))
+  .catch(err => console.error('Database connection test failed:', err));
+
 // Middleware to verify JWT
 // const authenticateToken = (req, res, next) => {
 //   const authHeader = req.headers['authorization'];
@@ -143,177 +147,216 @@ pool.connect()
 //   }
 // });
 
-// // Protected Routes
-// // Get all plans for a user
-// app.get('/api/plans', authenticateToken, async (req, res) => {
-//   try {
-//     const result = await pool.query(`
-//       SELECT p.*, 
-//              COALESCE(
-//                json_agg(
-//                  json_build_object(
-//                    'id', ps.id,
-//                    'step_number', ps.step_number,
-//                    'description', ps.description,
-//                    'completed', ps.completed
-//                  ) ORDER BY ps.step_number
-//                ) FILTER (WHERE ps.id IS NOT NULL), 
-//                '[]'
-//              ) as plan_steps
-//       FROM plans p
-//       LEFT JOIN plan_steps ps ON p.id = ps.plan_id
-//       WHERE p.user_id = $1
-//       GROUP BY p.id
-//       ORDER BY p.created_at DESC
-//     `, [req.user.id]);
+// ===== PLANS API ROUTES =====
 
-//     res.json(result.rows);
-//   } catch (error) {
-//     console.error('Error fetching plans:', error);
-//     res.status(500).json({ error: 'Failed to fetch plans' });
-//   }
-// });
+// Get all plans
+app.get('/api/plans', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT p.*, 
+             COALESCE(
+               json_agg(
+                 json_build_object(
+                   'id', ps.id,
+                   'title', ps.title,
+                   'description', ps.description,
+                   'order_number', ps.order_number,
+                   'completed', ps.is_completed,
+                   'created_at', ps.created_at,
+                   'updated_at', ps.updated_at
+                 ) ORDER BY ps.order_number
+               ) FILTER (WHERE ps.id IS NOT NULL), 
+               '[]'
+             ) as plan_steps
+      FROM plans p
+      LEFT JOIN plan_steps ps ON p.id = ps.plan_id
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
+    `);
 
-// // Get a single plan by ID
-// app.get('/api/plans/:id', authenticateToken, async (req, res) => {
-//   try {
-//     const result = await pool.query(`
-//       SELECT p.*, 
-//              COALESCE(
-//                json_agg(
-//                  json_build_object(
-//                    'id', ps.id,
-//                    'step_number', ps.step_number,
-//                    'description', ps.description,
-//                    'completed', ps.completed
-//                  ) ORDER BY ps.step_number
-//                ) FILTER (WHERE ps.id IS NOT NULL), 
-//                '[]'
-//              ) as plan_steps
-//       FROM plans p
-//       LEFT JOIN plan_steps ps ON p.id = ps.plan_id
-//       WHERE p.id = $1 AND p.user_id = $2
-//       GROUP BY p.id
-//     `, [req.params.id, req.user.id]);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching plans:', error);
+    res.status(500).json({ error: 'Failed to fetch plans' });
+  }
+});
 
-//     if (result.rows.length === 0) {
-//       return res.status(404).json({ error: 'Plan not found' });
-//     }
+// Get a single plan by ID
+app.get('/api/plans/:id', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT p.*, 
+             COALESCE(
+               json_agg(
+                 json_build_object(
+                   'id', ps.id,
+                   'title', ps.title,
+                   'description', ps.description,
+                   'order_number', ps.order_number,
+                   'completed', ps.is_completed,
+                   'created_at', ps.created_at,
+                   'updated_at', ps.updated_at
+                 ) ORDER BY ps.order_number
+               ) FILTER (WHERE ps.id IS NOT NULL), 
+               '[]'
+             ) as plan_steps
+      FROM plans p
+      LEFT JOIN plan_steps ps ON p.id = ps.plan_id
+      WHERE p.id = $1
+      GROUP BY p.id
+    `, [req.params.id]);
 
-//     res.json(result.rows[0]);
-//   } catch (error) {
-//     console.error('Error fetching plan:', error);
-//     res.status(500).json({ error: 'Failed to fetch plan' });
-//   }
-// });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Plan not found' });
+    }
 
-// // Create a new plan
-// app.post('/api/plans', authenticateToken, async (req, res) => {
-//   const { title, description, steps } = req.body;
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error fetching plan:', error);
+    res.status(500).json({ error: 'Failed to fetch plan' });
+  }
+});
+
+// Create a new plan with steps
+app.post('/api/plans', async (req, res) => {
+  const { title, description, steps, category, is_ai_generated = false } = req.body;
   
-//   if (!title) {
-//     return res.status(400).json({ error: 'Plan title is required' });
-//   }
+  if (!title) {
+    return res.status(400).json({ error: 'Plan title is required' });
+  }
 
-//   const client = await pool.connect();
+  const client = await pool.connect();
   
-//   try {
-//     await client.query('BEGIN');
+  try {
+    await client.query('BEGIN');
     
-//     // Insert the plan
-//     const planResult = await client.query(
-//       'INSERT INTO plans (title, description, user_id) VALUES ($1, $2, $3) RETURNING *',
-//       [title, description, req.user.id]
-//     );
+    // Insert the plan
+    const planResult = await client.query(
+      `INSERT INTO plans (id, title, description, category, is_ai_generated, user_id, created_at, updated_at) 
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING *`,
+      [title, description, category, is_ai_generated, 'default-user-id']
+    );
     
-//     const plan = planResult.rows[0];
+    const plan = planResult.rows[0];
     
-//     // Insert plan steps if provided
-//     if (steps && steps.length > 0) {
-//       const stepInserts = steps.map((step, index) => 
-//         client.query(
-//           'INSERT INTO plan_steps (plan_id, step_number, description) VALUES ($1, $2, $3)',
-//           [plan.id, index + 1, step.description]
-//         )
-//       );
+    // Insert plan steps if provided
+    if (steps && steps.length > 0) {
+      const stepInserts = steps.map((step, index) => 
+        client.query(
+          `INSERT INTO plan_steps (plan_id, title, description, order_number) 
+           VALUES ($1, $2, $3, $4)`,
+          [plan.id, step.title, step.description, step.order || index + 1]
+        )
+      );
       
-//       await Promise.all(stepInserts);
-//     }
+      await Promise.all(stepInserts);
+    }
     
-//     await client.query('COMMIT');
+    await client.query('COMMIT');
     
-//     // Fetch the complete plan with steps
-//     const completeResult = await pool.query(`
-//       SELECT p.*, 
-//              COALESCE(
-//                json_agg(
-//                  json_build_object(
-//                    'id', ps.id,
-//                    'step_number', ps.step_number,
-//                    'description', ps.description,
-//                    'completed', ps.completed
-//                  ) ORDER BY ps.step_number
-//                ) FILTER (WHERE ps.id IS NOT NULL), 
-//                '[]'
-//              ) as plan_steps
-//       FROM plans p
-//       LEFT JOIN plan_steps ps ON p.id = ps.plan_id
-//       WHERE p.id = $1
-//       GROUP BY p.id
-//     `, [plan.id]);
+    // Fetch the complete plan with steps
+    const completeResult = await pool.query(`
+      SELECT p.*, 
+             COALESCE(
+               json_agg(
+                 json_build_object(
+                   'id', ps.id,
+                   'title', ps.title,
+                   'description', ps.description,
+                   'order_number', ps.order_number,
+                   'completed', ps.is_completed,
+                   'created_at', ps.created_at,
+                   'updated_at', ps.updated_at
+                 ) ORDER BY ps.order_number
+               ) FILTER (WHERE ps.id IS NOT NULL), 
+               '[]'
+             ) as plan_steps
+      FROM plans p
+      LEFT JOIN plan_steps ps ON p.id = ps.plan_id
+      WHERE p.id = $1
+      GROUP BY p.id
+    `, [plan.id]);
     
-//     res.status(201).json(completeResult.rows[0]);
-//   } catch (error) {
-//     await client.query('ROLLBACK');
-//     console.error('Error creating plan:', error);
-//     res.status(500).json({ error: 'Failed to create plan' });
-//   } finally {
-//     client.release();
-//   }
-// });
+    res.status(201).json(completeResult.rows[0]);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error creating plan:', error);
+    res.status(500).json({ error: 'Failed to create plan' });
+  } finally {
+    client.release();
+  }
+});
 
-// // Update a plan
-// app.put('/api/plans/:id', authenticateToken, async (req, res) => {
-//   const { title, description } = req.body;
-//   const planId = req.params.id;
+// Update a plan
+app.put('/api/plans/:id', async (req, res) => {
+  const { title, description, category } = req.body;
+  const planId = req.params.id;
   
-//   try {
-//     const result = await pool.query(
-//       'UPDATE plans SET title = $1, description = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3 AND user_id = $4 RETURNING *',
-//       [title, description, planId, req.user.id]
-//     );
+  try {
+    const result = await pool.query(
+      `UPDATE plans 
+       SET title = $1, description = $2, category = $3, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $4 RETURNING *`,
+      [title, description, category, planId]
+    );
     
-//     if (result.rows.length === 0) {
-//       return res.status(404).json({ error: 'Plan not found' });
-//     }
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Plan not found' });
+    }
     
-//     res.json(result.rows[0]);
-//   } catch (error) {
-//     console.error('Error updating plan:', error);
-//     res.status(500).json({ error: 'Failed to update plan' });
-//   }
-// });
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating plan:', error);
+    res.status(500).json({ error: 'Failed to update plan' });
+  }
+});
 
-// // Delete a plan
-// app.delete('/api/plans/:id', authenticateToken, async (req, res) => {
-//   const planId = req.params.id;
+// Delete a plan
+app.delete('/api/plans/:id', async (req, res) => {
+  const planId = req.params.id;
   
-//   try {
-//     const result = await pool.query(
-//       'DELETE FROM plans WHERE id = $1 AND user_id = $2 RETURNING *',
-//       [planId, req.user.id]
-//     );
+  try {
+    const result = await pool.query(
+      'DELETE FROM plans WHERE id = $1 RETURNING *',
+      [planId]
+    );
     
-//     if (result.rows.length === 0) {
-//       return res.status(404).json({ error: 'Plan not found' });
-//     }
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Plan not found' });
+    }
     
-//     res.json({ message: 'Plan deleted successfully' });
-//   } catch (error) {
-//     console.error('Error deleting plan:', error);
-//     res.status(500).json({ error: 'Failed to delete plan' });
-//   }
-// });
+    res.json({ message: 'Plan deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting plan:', error);
+    res.status(500).json({ error: 'Failed to delete plan' });
+  }
+});
+
+// Update plan step completion status
+app.patch('/api/plans/:planId/steps/:stepId', async (req, res) => {
+  const { planId, stepId } = req.params;
+  const { is_completed } = req.body;
+  
+  try {
+    const result = await pool.query(
+      `UPDATE plan_steps 
+       SET is_completed = $1, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $2 AND plan_id = $3 RETURNING *`,
+      [is_completed, stepId, planId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Plan step not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating plan step:', error);
+    res.status(500).json({ error: 'Failed to update plan step' });
+  }
+});
+
+// ===== END PLANS API ROUTES =====
 
 // Error handling middleware
 app.use((err, req, res, next) => {

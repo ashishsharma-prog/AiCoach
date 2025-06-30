@@ -60,12 +60,19 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     return formatted;
   };
 
-  const savePlanToDatabase = async (plan: GeneratePlanResponse) => {
+  const savePlanToDatabase = async (plan: GeneratePlanResponse): Promise<any> => {
+    console.log('Attempting to save plan to database:', plan);
+    
     try {
+      // Add timeout to the fetch request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch('http://localhost:3001/api/plans', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           title: plan.title,
@@ -73,11 +80,19 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           steps: plan.steps,
           category: 'personal', // Default category, can be enhanced later
           is_ai_generated: true
-        })
+        }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
       if (!response.ok) {
-        throw new Error(`Failed to save plan: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Server response error:', errorText);
+        throw new Error(`Failed to save plan: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
       const savedPlan = await response.json();
@@ -85,7 +100,17 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       return savedPlan;
     } catch (error) {
       console.error('Error saving plan:', error);
-      return null;
+      
+      // More specific error handling
+      if (error.name === 'AbortError') {
+        console.error('Request timed out');
+        throw new Error('Request timed out. Please check if the server is running.');
+      } else if (error instanceof TypeError && error.message.includes('fetch')) {
+        console.error('Network error - server might not be running');
+        throw new Error('Cannot connect to server. Please check if the server is running on port 3001.');
+      } else {
+        throw error;
+      }
     }
   };
 
@@ -104,26 +129,30 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       // Check if the message implies a plan request
       const isPlanRequest = content.toLowerCase().includes('plan') || 
                           content.toLowerCase().includes('routine') ||
-                          content.toLowerCase().includes('help me');
-      console.log(isPlanRequest,'isPlanRequest')
+                          content.toLowerCase().includes('help me') ||
+                          content.toLowerCase().includes('create') ||
+                          content.toLowerCase().includes('make');
+      
+      console.log('Plan request detected:', isPlanRequest, 'for message:', content);
+      
       if (isPlanRequest) {
-        console.log('Plan request detected:', content);
+        console.log('Processing plan request:', content);
         
-        const plan = await generatePlan(content);
-        console.log('Generated plan:', plan);
-        
-        if (plan && plan.title && plan.description && Array.isArray(plan.steps)) {
-          try {
-            const savedPlan = await savePlanToDatabase(plan);
-            console.log('Saved plan result:', savedPlan);
-            
-            if (savedPlan) {
+        try {
+          const plan = await generatePlan(content);
+          console.log('Generated plan:', plan);
+          
+          if (plan && plan.title && plan.description && Array.isArray(plan.steps) && plan.steps.length > 0) {
+            try {
+              const savedPlan = await savePlanToDatabase(plan);
+              console.log('Plan saved to database:', savedPlan);
+              
               const formattedResponse = formatMessage(
-                `📋 I've created a plan for you: "${plan.title}"\n\n${plan.description}\n\n` +
-                `**Steps:**\n${plan.steps.map((step) => 
-                  `• ${step.title}: ${step.description}`
+                `📋 I've created and saved a plan for you: "${plan.title}"\n\n${plan.description}\n\n` +
+                `**Steps:**\n${plan.steps.map((step, index) => 
+                  `${index + 1}. **${step.title}**: ${step.description}`
                 ).join('\n')}\n\n` +
-                `I've saved this plan to your Plans List, where you can view all the steps and track your progress.`
+                `✅ This plan has been saved to your Plans List, where you can view all the steps and track your progress!`
               );
               
               const aiMessage: ChatMessage = {
@@ -135,26 +164,38 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
               
               setMessages((prev) => [...prev, aiMessage]);
               setGeneratedPlans((prev) => [...prev, plan]);
-            } else {
-              // Plan generation succeeded but saving failed
-              const errorMessage: ChatMessage = {
+              
+            } catch (saveError) {
+              console.error('Error saving plan to database:', saveError);
+              
+              // Still show the plan even if saving failed
+              const formattedResponse = formatMessage(
+                `📋 I've created a plan for you: "${plan.title}"\n\n${plan.description}\n\n` +
+                `**Steps:**\n${plan.steps.map((step, index) => 
+                  `${index + 1}. **${step.title}**: ${step.description}`
+                ).join('\n')}\n\n` +
+                `⚠️ Note: I couldn't save this plan to your database (${saveError.message}), but you can still use it from this conversation.`
+              );
+              
+              const aiMessage: ChatMessage = {
                 id: generateUniqueId(),
                 sender: 'ai',
-                content: '📋 I created a plan for you, but couldn\'t save it to your database. The plan is still available in this conversation.',
+                content: formattedResponse,
                 timestamp: new Date(),
               };
-              setMessages((prev) => [...prev, errorMessage]);
+              
+              setMessages((prev) => [...prev, aiMessage]);
+              setGeneratedPlans((prev) => [...prev, plan]);
             }
-          } catch (saveError) {
-            console.error('Error saving plan to database:', saveError);
+          } else {
+            // Plan generation failed or returned invalid structure
+            console.error('Plan generation failed or returned invalid structure:', plan);
             
-            // Still show the plan even if saving failed
+            // Fall back to regular response generation
+            console.log('Falling back to regular response generation');
+            const response = await generateResponse(content);
             const formattedResponse = formatMessage(
-              `📋 I've created a plan for you: "${plan.title}"\n\n${plan.description}\n\n` +
-              `**Steps:**\n${plan.steps.map((step) => 
-                `• ${step.title}: ${step.description}`
-              ).join('\n')}\n\n` +
-              `Note: I couldn't save this plan to your database, but you can still use it from this conversation.`
+              response || "I'm having trouble creating a detailed plan right now. Could you provide more specific details about what you'd like help with?"
             );
             
             const aiMessage: ChatMessage = {
@@ -165,46 +206,72 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             };
             
             setMessages((prev) => [...prev, aiMessage]);
-            setGeneratedPlans((prev) => [...prev, plan]);
           }
-        } else {
-          // Plan generation failed
-          console.error('Plan generation failed or returned invalid structure:', plan);
+        } catch (planError) {
+          console.error('Error generating plan:', planError);
           
-          // Fall back to regular response generation
-          console.log('Falling back to regular response generation');
-          const response = await generateResponse(content);
-          const formattedResponse = formatMessage(response || "I'm having trouble creating a detailed plan right now. Could you provide more specific details about what you'd like help with?");
-          
-          const aiMessage: ChatMessage = {
-            id: generateUniqueId(),
-            sender: 'ai',
-            content: formattedResponse,
-            timestamp: new Date(),
-          };
-          
-          setMessages((prev) => [...prev, aiMessage]);
+          // Try regular response as fallback
+          try {
+            const response = await generateResponse(content);
+            const formattedResponse = formatMessage(
+              response || "I'm having some technical difficulties right now. Could you try again in a moment?"
+            );
+            
+            const aiMessage: ChatMessage = {
+              id: generateUniqueId(),
+              sender: 'ai',
+              content: formattedResponse,
+              timestamp: new Date(),
+            };
+            
+            setMessages((prev) => [...prev, aiMessage]);
+          } catch (responseError) {
+            console.error('Both plan generation and regular response failed:', responseError);
+            
+            const errorMessage: ChatMessage = {
+              id: generateUniqueId(),
+              sender: 'ai',
+              content: '🤔 I\'m experiencing some technical difficulties. Please try again in a moment, or rephrase your request.',
+              timestamp: new Date(),
+            };
+            
+            setMessages((prev) => [...prev, errorMessage]);
+          }
         }
       } else {
-        console.log('Regular response generation');
-        const response = await generateResponse(content);
+        console.log('Regular response generation for:', content);
         
-        if (response) {
-          const formattedResponse = formatMessage(response);
-          const aiMessage: ChatMessage = {
-            id: generateUniqueId(),
-            sender: 'ai',
-            content: formattedResponse,
-            timestamp: new Date(),
-          };
+        try {
+          const response = await generateResponse(content);
           
-          setMessages((prev) => [...prev, aiMessage]);
-        } else {
-          // Handle case where generateResponse returns null/undefined
+          if (response) {
+            const formattedResponse = formatMessage(response);
+            const aiMessage: ChatMessage = {
+              id: generateUniqueId(),
+              sender: 'ai',
+              content: formattedResponse,
+              timestamp: new Date(),
+            };
+            
+            setMessages((prev) => [...prev, aiMessage]);
+          } else {
+            // Handle case where generateResponse returns null/undefined
+            const errorMessage: ChatMessage = {
+              id: generateUniqueId(),
+              sender: 'ai',
+              content: '🤔 I\'m having trouble generating a response right now. Could you try rephrasing your question?',
+              timestamp: new Date(),
+            };
+            
+            setMessages((prev) => [...prev, errorMessage]);
+          }
+        } catch (responseError) {
+          console.error('Error generating regular response:', responseError);
+          
           const errorMessage: ChatMessage = {
             id: generateUniqueId(),
             sender: 'ai',
-            content: '🤔 I\'m having trouble generating a response right now. Could you try rephrasing your question?',
+            content: '😔 I\'m having some technical issues right now. Please try again in a moment.',
             timestamp: new Date(),
           };
           
@@ -212,7 +279,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     } catch (error) {
-      console.error('Error in sendMessage:', error);
+      console.error('Unexpected error in sendMessage:', error);
       
       // More detailed error logging
       if (error instanceof Error) {

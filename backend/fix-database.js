@@ -11,38 +11,56 @@ const pool = new Pool({
 
 async function fixDatabase() {
   try {
-    console.log('Checking database schema...');
+    console.log('=== FIXING DATABASE SCHEMA ===');
     
-    // Check current column type
-    const checkResult = await pool.query(`
-      SELECT column_name, data_type 
-      FROM information_schema.columns 
-      WHERE table_name = 'plans' AND column_name = 'user_id'
+    // Check for unique constraints that might cause issues
+    console.log('1. Checking constraints...');
+    const constraintsResult = await pool.query(`
+      SELECT constraint_name, constraint_type 
+      FROM information_schema.table_constraints 
+      WHERE table_name = 'plans' AND constraint_type = 'UNIQUE'
     `);
     
-    console.log('Current user_id column type:', checkResult.rows[0]);
+    console.log('Unique constraints found:', constraintsResult.rows);
     
-    if (checkResult.rows[0] && checkResult.rows[0].data_type !== 'character varying') {
-      console.log('Fixing user_id column type...');
-      
-      // Alter the column type to VARCHAR
+    // Remove problematic unique constraint if it exists
+    if (constraintsResult.rows.some(row => row.constraint_name === 'plans_unique_user_id_title')) {
+      console.log('Removing problematic unique constraint...');
       await pool.query(`
-        ALTER TABLE plans ALTER COLUMN user_id TYPE VARCHAR(255)
+        ALTER TABLE plans DROP CONSTRAINT IF EXISTS plans_unique_user_id_title
       `);
-      
-      console.log('user_id column type fixed successfully!');
-    } else {
-      console.log('user_id column type is already correct.');
+      console.log('✓ Unique constraint removed!');
     }
     
-    // Verify the fix
-    const verifyResult = await pool.query(`
-      SELECT column_name, data_type 
-      FROM information_schema.columns 
-      WHERE table_name = 'plans' AND column_name = 'user_id'
+    // Fix category column to allow NULL or add default
+    console.log('2. Fixing category column...');
+    await pool.query(`
+      ALTER TABLE plans ALTER COLUMN category DROP NOT NULL
     `);
+    console.log('✓ Category column now allows NULL');
     
-    console.log('Updated user_id column type:', verifyResult.rows[0]);
+    // Fix is_ai_generated column to have a default
+    console.log('3. Fixing is_ai_generated column...');
+    await pool.query(`
+      ALTER TABLE plans ALTER COLUMN is_ai_generated SET DEFAULT FALSE
+    `);
+    console.log('✓ is_ai_generated default set');
+    
+    // Test insert to verify everything works
+    console.log('4. Testing insert...');
+    const testResult = await pool.query(`
+      INSERT INTO plans (title, description) 
+      VALUES ($1, $2) 
+      RETURNING id, title, created_at, updated_at, category, is_ai_generated
+    `, ['Test Plan - ' + Date.now(), 'Test Description']);
+    
+    console.log('✓ Test insert successful:', testResult.rows[0]);
+    
+    // Clean up test data
+    await pool.query('DELETE FROM plans WHERE title LIKE $1', ['Test Plan - %']);
+    console.log('✓ Test data cleaned up');
+    
+    console.log('=== DATABASE FIX COMPLETE ===');
     
   } catch (error) {
     console.error('Error fixing database:', error);

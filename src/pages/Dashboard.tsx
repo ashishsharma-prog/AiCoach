@@ -1,18 +1,34 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { PlusCircle, ArrowRight } from 'lucide-react';
 import { useUser } from '../context/UserContext';
-import { useChat } from '../context/ChatContext';
-import GoalCard from '../components/dashboard/GoalCard';
 import ProgressChart from '../components/dashboard/ProgressChart';
 import CoachingPlanCard from '../components/plans/CoachingPlanCard';
+import { getPlans } from '../lib/api';
+import { Plan } from '../lib/types/plan';
 
 const Dashboard: React.FC = () => {
-  const { user, updateTask } = useUser();
-  const { generatedPlans } = useChat();
+  const { user } = useUser();
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  const handleTaskToggle = (goalId: string, taskId: string, completed: boolean) => {
-    updateTask(goalId, taskId, completed);
-  };
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        setLoading(true);
+        const fetchedPlans = await getPlans();
+        setPlans(fetchedPlans);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching plans:', err);
+        setError('Failed to load plans');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlans();
+  }, []);
   
   if (!user) {
     return <div>Loading...</div>;
@@ -33,59 +49,42 @@ const Dashboard: React.FC = () => {
       
       <ProgressChart goals={user.goals} />
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium text-gray-900">Your Goals</h2>
-            <button className="text-sm text-teal-600 hover:text-teal-700 flex items-center">
-              <span>View All</span>
-              <ArrowRight size={16} className="ml-1" />
-            </button>
-          </div>
-          
-          <div className="space-y-4">
-            {user.goals.map((goal) => (
-              <GoalCard 
-                key={goal.id} 
-                goal={goal} 
-                onTaskToggle={(taskId, completed) => handleTaskToggle(goal.id, taskId, completed)} 
-              />
-            ))}
-          </div>
-          
-          {user.goals.length === 0 && (
-            <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-              <p className="text-gray-500">You don't have any goals yet.</p>
+      <div>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-medium text-gray-900">Coaching Plans</h2>
+          <button className="text-sm text-teal-600 hover:text-teal-700 flex items-center">
+            <span>View All</span>
+            <ArrowRight size={16} className="ml-1" />
+          </button>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {loading ? (
+            <div className="col-span-full bg-white rounded-lg shadow-sm p-6 text-center">
+              <p className="text-gray-500">Loading plans...</p>
+            </div>
+          ) : error ? (
+            <div className="col-span-full bg-white rounded-lg shadow-sm p-6 text-center">
+              <p className="text-red-500">{error}</p>
+              <button 
+                className="mt-3 px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors"
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </button>
+            </div>
+          ) : plans.length > 0 ? (
+            plans.map((plan) => (
+              <CoachingPlanCard key={plan.id} plan={plan} />
+            ))
+          ) : (
+            <div className="col-span-full bg-white rounded-lg shadow-sm p-6 text-center">
+              <p className="text-gray-500">No coaching plans yet.</p>
               <button className="mt-3 px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors">
-                Create Your First Goal
+                Generate a Plan
               </button>
             </div>
           )}
-        </div>
-        
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium text-gray-900">Coaching Plans</h2>
-            <button className="text-sm text-teal-600 hover:text-teal-700 flex items-center">
-              <span>View All</span>
-              <ArrowRight size={16} className="ml-1" />
-            </button>
-          </div>
-          
-          <div className="space-y-4">
-            {generatedPlans.map((plan) => (
-              <CoachingPlanCard key={plan.id} plan={plan} />
-            ))}
-            
-            {generatedPlans.length === 0 && (
-              <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-                <p className="text-gray-500">No coaching plans yet.</p>
-                <button className="mt-3 px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors">
-                  Generate a Plan
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>

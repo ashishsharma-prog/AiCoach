@@ -1,36 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { useChat } from '../context/ChatContext';
 import { PlusCircle, Search } from 'lucide-react';
 import CoachingPlanCard from '../components/plans/CoachingPlanCard';
 import { getPlans } from '../lib/api';
-import { CoachingPlan } from '../types';
+import { Plan } from '../lib/types/plan';
 
 const Plans: React.FC = () => {
-  const [plans, setPlans] = useState<CoachingPlan[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { generatedPlans } = useChat();
 
   useEffect(() => {
     const fetchPlans = async () => {
       try {
         const data = await getPlans();
-        // Transform the data to match the expected format
-        const transformedPlans = data.map(plan => ({
-          id: plan.id,
-          title: plan.title,
-          description: plan.description,
-          steps: plan.plan_steps.map(step => ({
-            id: step.id,
-            title: step.title,
-            description: step.description,
-            order: step.order_number,
-            completed: step.completed
-          })),
-          createdAt: new Date(plan.created_at),
-          goalId: plan.id // Using plan id as goalId since it's not in the API response
-        }));
-        setPlans(transformedPlans);
+        setPlans(data);
       } catch (err) {
         setError('Failed to fetch plans');
         console.error(err);

@@ -20,34 +20,7 @@ const mockUser: User = {
   name: 'Alex Johnson',
   email: 'alex@example.com',
   avatar: 'https://i.pravatar.cc/150?img=12',
-  goals: [
-    {
-      id: '1',
-      title: 'Run a half marathon',
-      description: 'Train to complete a half marathon in under 2 hours',
-      targetDate: new Date(2025, 5, 15),
-      progress: 35,
-      category: 'fitness',
-      tasks: [
-        { id: '1', title: 'Run 5km 3 times per week', completed: true },
-        { id: '2', title: 'Complete 10km run', completed: false },
-        { id: '3', title: 'Register for half marathon', completed: false },
-      ]
-    },
-    {
-      id: '2',
-      title: 'Learn React Native',
-      description: 'Build 3 mobile apps with React Native',
-      targetDate: new Date(2025, 3, 1),
-      progress: 20,
-      category: 'education',
-      tasks: [
-        { id: '1', title: 'Complete React Native course', completed: false },
-        { id: '2', title: 'Build a todo app', completed: true },
-        { id: '3', title: 'Publish app to App Store', completed: false },
-      ]
-    }
-  ]
+  goals: [],
 };
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
@@ -61,20 +34,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const updateGoal = (goalId: string, updates: Partial<Goal>) => {
     if (!user) return;
-    const updatedGoals = user.goals.map(goal => 
-      goal.id === goalId ? { ...goal, ...updates } : goal
-    );
+    const updatedGoals = user.goals.map((goal) => (goal.id === goalId ? { ...goal, ...updates } : goal));
     setUser({ ...user, goals: updatedGoals });
   };
 
   const deleteGoal = (goalId: string) => {
     if (!user) return;
-    setUser({ ...user, goals: user.goals.filter(goal => goal.id !== goalId) });
+    setUser({ ...user, goals: user.goals.filter((goal) => goal.id !== goalId) });
   };
 
   const addTask = (goalId: string, task: Task) => {
     if (!user) return;
-    const updatedGoals = user.goals.map(goal => {
+    const updatedGoals = user.goals.map((goal) => {
       if (goal.id === goalId) {
         return { ...goal, tasks: [...goal.tasks, task] };
       }
@@ -85,11 +56,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const updateTask = (goalId: string, taskId: string, completed: boolean) => {
     if (!user) return;
-    const updatedGoals = user.goals.map(goal => {
+    const updatedGoals = user.goals.map((goal) => {
       if (goal.id === goalId) {
-        const updatedTasks = goal.tasks.map(task => 
-          task.id === taskId ? { ...task, completed } : task
-        );
+        const updatedTasks = goal.tasks.map((task) => (task.id === taskId ? { ...task, completed } : task));
         return { ...goal, tasks: updatedTasks };
       }
       return goal;
@@ -99,9 +68,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteTask = (goalId: string, taskId: string) => {
     if (!user) return;
-    const updatedGoals = user.goals.map(goal => {
+    const updatedGoals = user.goals.map((goal) => {
       if (goal.id === goalId) {
-        return { ...goal, tasks: goal.tasks.filter(task => task.id !== taskId) };
+        return { ...goal, tasks: goal.tasks.filter((task) => task.id !== taskId) };
       }
       return goal;
     });
@@ -109,17 +78,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <UserContext.Provider value={{ 
-      user, 
-      isLoading,
-      setUser, 
-      addGoal, 
-      updateGoal, 
-      deleteGoal,
-      addTask,
-      updateTask,
-      deleteTask
-    }}>
+    <UserContext.Provider
+      value={{
+        user,
+        isLoading,
+        setUser,
+        addGoal,
+        updateGoal,
+        deleteGoal,
+        addTask,
+        updateTask,
+        deleteTask,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );

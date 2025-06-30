@@ -1,11 +1,11 @@
 import React from 'react';
 import { Clock, CheckCircle, ChevronRight } from 'lucide-react';
-import { CoachingPlan } from '../../types';
+import { Plan } from '../../lib/types/plan';
 import { formatDate } from '../../utils/helpers';
 import { useNavigate } from 'react-router-dom';
 
 interface CoachingPlanCardProps {
-  plan: CoachingPlan;
+  plan: Plan;
 }
 
 const CoachingPlanCard: React.FC<CoachingPlanCardProps> = ({ plan }) => {
@@ -22,7 +22,7 @@ const CoachingPlanCard: React.FC<CoachingPlanCardProps> = ({ plan }) => {
         <h3 className="font-medium text-gray-900">{plan.title}</h3>
         <div className="flex items-center mt-1 text-xs text-gray-500">
           <Clock size={14} className="mr-1" />
-          <span>Created on {formatDate(plan.created_at)}</span>
+          <span>Created on {plan.created_at ? formatDate(new Date(plan.created_at)) : 'Unknown date'}</span>
         </div>
       </div>
       
@@ -45,7 +45,7 @@ const CoachingPlanCard: React.FC<CoachingPlanCardProps> = ({ plan }) => {
         </div>
         
         <div className="mt-4 space-y-2">
-          {plan.steps.slice(0, 2).map(step => (
+          {plan_steps.slice(0, 2).map(step => (
             <div key={step.id} className="flex items-start">
               <div className="flex-shrink-0 mt-0.5 mr-2 text-gray-400">
                 {step.completed ? (

@@ -3,11 +3,16 @@ export const generateUniqueId = (): string => {
 };
 
 export const formatDate = (date: Date): string => {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  }).format(date);
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }).format(date);
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Invalid date';
+  }
 };
 
 export const calculateDaysRemaining = (targetDate: Date): number => {

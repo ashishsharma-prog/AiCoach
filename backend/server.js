@@ -28,7 +28,11 @@ app.use(errorHandler);
 // Graceful shutdown
 const gracefulShutdown = async () => {
   console.log('Shutting down gracefully...');
-  await pool.end();
+  try {
+    await pool.end();
+  } catch (error) {
+    console.error('Error during shutdown:', error);
+  }
   process.exit(0);
 };
 
@@ -38,7 +42,13 @@ process.on('SIGTERM', gracefulShutdown);
 // Initialize database and start server
 const startServer = async () => {
   try {
-    await initializeDatabase();
+    // Try to initialize database, but don't fail if it doesn't work
+    try {
+      await initializeDatabase();
+      console.log('Database initialized successfully');
+    } catch (dbError) {
+      console.error('Database initialization failed, but server will continue:', dbError.message);
+    }
     
     const PORT = process.env.PORT || 3001;
     app.listen(PORT, () => {

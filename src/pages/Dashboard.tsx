@@ -7,11 +7,11 @@ import { getPlans } from '../lib/api';
 import { Plan } from '../lib/types/plan';
 
 const Dashboard: React.FC = () => {
+  console.log('check')
   const { user } = useUser();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
   useEffect(() => {
     const fetchPlans = async () => {
       try {
@@ -21,7 +21,9 @@ const Dashboard: React.FC = () => {
         setError(null);
       } catch (err) {
         console.error('Error fetching plans:', err);
-        setError('Failed to load plans');
+        setError('Failed to load plans. Please check your connection.');
+        // Set empty plans array to prevent further errors
+        setPlans([]);
       } finally {
         setLoading(false);
       }

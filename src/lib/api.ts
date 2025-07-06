@@ -1,9 +1,9 @@
-const API_URL = 'http://localhost:3001/api';
+import { API_URL } from '../constant';
 
 export const getPlans = async () => {
   console.log('getPlans')
   try {
-    const response = await fetch('http://localhost:3001/api/plans');
+    const response = await fetch(`${API_URL}/plans`);
     console.log(response,'response')
 
     if (!response.ok) {

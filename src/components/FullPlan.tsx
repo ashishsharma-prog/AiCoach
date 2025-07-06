@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, AlertCircle } from 'lucide-react';
 import { getPlanById } from '../lib/api';
+import { API_URL } from '../constant';
 // import { getPlanById, updatePlanStep } from '../services/planService';
 
 interface PlanStep {
@@ -75,7 +76,7 @@ const FullPlan: React.FC = () => {
       });
 
       // Update in database
-      const response = await fetch(`http://localhost:3001/api/plans/${planId}/steps/${stepId}`, {
+      const response = await fetch(`${API_URL}/plans/${planId}/steps/${stepId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

@@ -1,1 +1,1 @@
-export const API_URL = 'https://tramway.proxy.rlwy.net/api'; 
+export const API_URL = 'https://aicoach-production-1999.up.railway.app/api'; 

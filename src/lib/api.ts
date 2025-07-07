@@ -1,7 +1,6 @@
 import { API_URL } from '../constant';
 
 export const getPlans = async () => {
-  console.log('getPlans')
   try {
     const response = await fetch(`${API_URL}/plans`);
     console.log(response,'response')

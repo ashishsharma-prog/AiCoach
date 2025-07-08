@@ -99,7 +99,6 @@ router.post('/', async (req, res) => {
     
     // Insert plan steps if provided
     if (steps && Array.isArray(steps) && steps.length > 0) {
-      console.log('Inserting steps:', steps);
       
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];

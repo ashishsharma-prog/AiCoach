@@ -1,11 +1,26 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// Initialize PostgreSQL client with error handling
-const pool = new Pool({
-  connectionString: process.env.PG_CONNECTION_STRING,
-  ssl: { rejectUnauthorized: false },
-});
+// Initialize PostgreSQL client with Railway DATABASE_URL if available
+const pool = new Pool(
+  process.env.DATABASE_URL
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false },
+        max: 5,
+        min: 1,
+      }
+    : {
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        port: process.env.DB_PORT || 5432,
+        max: 5,
+        min: 1,
+        ssl: { rejectUnauthorized: false },
+      }
+);
 
 // Test database connection
 pool.on('connect', () => {
@@ -21,7 +36,7 @@ const initializeDatabase = async () => {
   try {
     await pool.connect();
     console.log('Database connection test successful');
-    
+
     // Create tables if they don't exist
     await pool.query(`
       CREATE TABLE IF NOT EXISTS plans (
@@ -35,7 +50,7 @@ const initializeDatabase = async () => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS plan_steps (
         id SERIAL PRIMARY KEY,
@@ -48,7 +63,7 @@ const initializeDatabase = async () => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    
+
     console.log('Database tables initialized successfully');
   } catch (err) {
     console.error('Database initialization failed:', err);
@@ -57,5 +72,5 @@ const initializeDatabase = async () => {
 
 module.exports = {
   pool,
-  initializeDatabase
-}; 
+  initializeDatabase,
+};

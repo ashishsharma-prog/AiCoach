@@ -51,7 +51,7 @@ const startServer = async () => {
     }
     
     const PORT = process.env.PORT || 3001;
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`CORS enabled for: http://localhost:3000, http://localhost:3001, http://localhost:5173, http://localhost:5174`);

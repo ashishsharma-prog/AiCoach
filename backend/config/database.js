@@ -1,33 +1,36 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
+if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is not defined.');
+}
 // Initialize PostgreSQL client with Railway DATABASE_URL if available
 const pool = new Pool(
-  process.env.DATABASE_URL && {
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-    max: 5,
-    min: 1,
-  },
+    process.env.DATABASE_URL && {
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false },
+        max: 5,
+        min: 1,
+    }
 );
 
 // Test database connection
 pool.on('connect', () => {
-  console.log('Connected to PostgreSQL database');
+    console.log('Connected to PostgreSQL database');
 });
 
 pool.on('error', (err) => {
-  console.error('Database connection error:', err);
+    console.error('Database connection error:', err);
 });
 
 // Test the connection and create tables if they don't exist
 const initializeDatabase = async () => {
-  try {
-    await pool.connect();
-    console.log('Database connection test successful');
+    try {
+        await pool.connect();
+        console.log('Database connection test successful');
 
-    // Create tables if they don't exist
-    await pool.query(`
+        // Create tables if they don't exist
+        await pool.query(`
       CREATE TABLE IF NOT EXISTS plans (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         title VARCHAR(255) NOT NULL,
@@ -40,7 +43,7 @@ const initializeDatabase = async () => {
       );
     `);
 
-    await pool.query(`
+        await pool.query(`
       CREATE TABLE IF NOT EXISTS plan_steps (
         id SERIAL PRIMARY KEY,
         plan_id UUID REFERENCES plans(id) ON DELETE CASCADE,
@@ -53,13 +56,13 @@ const initializeDatabase = async () => {
       );
     `);
 
-    console.log('Database tables initialized successfully');
-  } catch (err) {
-    console.error('Database initialization failed:', err);
-  }
+        console.log('Database tables initialized successfully');
+    } catch (err) {
+        console.error('Database initialization failed:', err);
+    }
 };
 
 module.exports = {
-  pool,
-  initializeDatabase,
+    pool,
+    initializeDatabase,
 };

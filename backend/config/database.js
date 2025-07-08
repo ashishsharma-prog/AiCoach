@@ -1,13 +1,13 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is not defined.');
-}
+// if (!process.env.DATABASE_URL) {
+//     throw new Error('DATABASE_URL is not defined.');
+// }
 // Initialize PostgreSQL client with Railway DATABASE_URL if available
 const pool = new Pool(
-    process.env.DATABASE_URL && {
-        connectionString: process.env.DATABASE_URL,
+    process.env.DATABASE_PUBLIC_URL && {
+        connectionString: process.env.DATABASE_PUBLIC_URL,
         ssl: { rejectUnauthorized: false },
         max: 5,
         min: 1,

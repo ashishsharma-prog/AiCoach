@@ -15,9 +15,9 @@ app.use((req, res, next) => {
 });
 
 // ✅ Apply CORS
-app.use(cors());
-// app.use(corsMiddleware);
-// app.options('*', corsMiddleware); // Handle preflight requests
+
+app.use(corsMiddleware);
+app.options('*', corsMiddleware); // Handle preflight requests
 // app.use(express.json());
 
 // API routes

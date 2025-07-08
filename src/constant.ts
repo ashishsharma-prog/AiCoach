@@ -1,1 +1,1 @@
-export const API_URL = 'https://mindful-imagination-production.up.railway.app/api'; 
+export const API_URL = 'https://aicoach-production-d965.up.railway.app/api'; 

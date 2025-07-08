@@ -1,27 +1,29 @@
 const express = require('express');
-// const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-// Import middleware
 const corsMiddleware = require('./middleware/cors');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
-
-// Import database configuration
 const { pool, initializeDatabase } = require('./config/database');
-
-// Import routes
 const apiRoutes = require('./routes');
 
 const app = express();
 
-// Middleware
-app.use(corsMiddleware);
-app.use(express.json());
+// Log the request origin to debug (optional)
+app.use((req, res, next) => {
+  console.log('Request Origin:', req.headers.origin);
+  next();
+});
+
+// ✅ Apply CORS
+app.use(cors());
+// app.use(corsMiddleware);
+// app.options('*', corsMiddleware); // Handle preflight requests
+// app.use(express.json());
 
 // API routes
 app.use('/api', apiRoutes);
 
-// Error handling middleware
+// Error handlers
 app.use(notFoundHandler);
 app.use(errorHandler);
 
@@ -39,27 +41,20 @@ const gracefulShutdown = async () => {
 process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);
 
-// Initialize database and start server
+// Start server
 const startServer = async () => {
   try {
-    // Try to initialize database, but don't fail if it doesn't work
-    try {
-      await initializeDatabase();
-      console.log('Database initialized successfully');
-    } catch (dbError) {
-      console.error('Database initialization failed, but server will continue:', dbError.message);
-    }
-    
-    const PORT = process.env.PORT || 3001;
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on port ${PORT}`);
-      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`CORS enabled for: http://localhost:3000, http://localhost:3001, http://localhost:5173, http://localhost:5174`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
+    await initializeDatabase();
+    console.log('Database initialized successfully');
+  } catch (err) {
+    console.error('Database init failed (continuing):', err.message);
   }
+
+  const PORT = process.env.PORT || 3001;
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
 };
 
-startServer(); 
+startServer();

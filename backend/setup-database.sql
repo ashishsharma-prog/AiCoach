@@ -1,9 +1,24 @@
 -- Database setup script for AiCoach application
 
+-- Create users table
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert a dummy user
+INSERT INTO users (name, email, password_hash)
+VALUES ('Demo User', 'demo@example.com', 'demo_hashed_password')
+ON CONFLICT (email) DO NOTHING;
+
 -- Create plans table
 CREATE TABLE IF NOT EXISTS plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id VARCHAR(255) NOT NULL DEFAULT 'default-user-id',
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     description TEXT,
     category VARCHAR(100),

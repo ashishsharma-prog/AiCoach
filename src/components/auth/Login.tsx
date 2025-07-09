@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { AUTH_API_URL } from '../../constant';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://aicoach-production-d965.up.railway.app/api';
+const API_URL_VAR = import.meta.env.VITE_API_URL || AUTH_API_URL;
+
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -88,14 +90,14 @@ export const Login: React.FC = () => {
         {/* Social Login Buttons */}
         <div className="mt-6 flex flex-col gap-2">
           <button
-            onClick={() => window.location.href = `${API_URL}/auth/google`}
+            onClick={() => window.location.href = `${API_URL_VAR}/auth/google`}
             className="w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-100 font-medium shadow-sm"
           >
             <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5 mr-2" />
             Login with Google
           </button>
           {/* <button
-            onClick={() => window.location.href = `${API_URL}/auth/facebook`}
+            onClick={() => window.location.href = `${API_URL_VAR}/auth/facebook`}
             className="w-full flex items-center justify-center py-2 px-4 border border-blue-600 rounded-md bg-blue-600 text-white hover:bg-blue-700 font-medium shadow-sm"
           >
             <img src="https://www.svgrepo.com/show/475700/facebook-color.svg" alt="Facebook" className="w-5 h-5 mr-2 bg-white rounded-full" />

@@ -3,7 +3,7 @@ const router = express.Router();
 const { pool } = require('../config/database');
 
 // Update plan step completion status
-router.patch('/:planId/steps/:stepId', async (req, res) => {
+router.patch('/:stepId', async (req, res) => {
   const { planId, stepId } = req.params;
   const { is_completed } = req.body;
   

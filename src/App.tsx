@@ -1,8 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import { Login } from './components/auth/Login';
-import { SignUp } from './components/auth/SignUp';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { UserProvider } from './context/UserContext';
 import { ChatProvider } from './context/ChatContext';
@@ -12,6 +10,9 @@ import Chat from './pages/Chat';
 import Progress from './pages/Progress';
 import Plans from './pages/Plans';
 import FullPlan from './components/FullPlan';
+import OAuthSuccess from './pages/OAuthSuccess';
+import { Login } from './components/auth/Login';
+import { SignUp } from './components/auth/SignUp';
 
 function App() {
   return (
@@ -21,8 +22,9 @@ function App() {
           <ChatProvider>
             <div className="min-h-screen bg-gray-50">
               <Routes>
-                {/* <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<SignUp />} /> */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<SignUp />} />
+                <Route path="/oauth-success" element={<OAuthSuccess />} />
                 <Route
                   path="/"
                   element={

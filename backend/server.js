@@ -5,6 +5,11 @@ const corsMiddleware = require('./middleware/cors');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const { pool, initializeDatabase } = require('./config/database');
 const apiRoutes = require('./routes');
+const passport = require('passport');
+const session = require('express-session');
+
+// Passport config
+require('./passport-config');
 
 const app = express();
 
@@ -20,8 +25,19 @@ app.use(corsMiddleware);
 app.options('*', corsMiddleware); // Handle preflight requests
 app.use(express.json());
 
+// Passport middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: process.env.NODE_ENV === 'production' }
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+
 // API routes
 app.use('/api', apiRoutes);
+app.use('/auth', require('./routes/auth'));
 
 // Error handlers
 app.use(notFoundHandler);

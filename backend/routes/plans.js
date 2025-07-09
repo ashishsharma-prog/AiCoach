@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
+const authenticateJWT = require('../middleware/auth');
+
+// Protect all routes
+router.use(authenticateJWT);
 
 // ===== PLANS API ROUTES =====
 
@@ -91,7 +95,7 @@ router.post('/', async (req, res) => {
     const planResult = await client.query(
       `INSERT INTO plans (title, description, category, is_ai_generated, user_id, created_at, updated_at) 
        VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING *`,
-      [title, description, category, is_ai_generated, 'default-user-id']
+      [title, description, category, is_ai_generated, req.user.id]
     );
     
     const plan = planResult.rows[0];

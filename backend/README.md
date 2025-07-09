@@ -72,3 +72,16 @@ The original `server.js` file has been preserved as a backup. To use the new str
 1. Test the new server with `node server-new.js`
 2. If everything works correctly, you can replace `server.js` with `server-new.js`
 3. Update your package.json scripts if needed 
+
+## Social Login & JWT Environment Variables
+
+Add these to your backend `.env` file:
+
+```
+GOOGLE_CLIENT_ID=840259996197-opie3rs5mhd0jqm1ovqpeqa9a2m8k926.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=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
+FB_CLIENT_ID=your_facebook_client_id
+FB_CLIENT_SECRET=your_facebook_client_secret
+JWT_SECRET=your_jwt_secret
+FRONTEND_URL=http://localhost:5173
+``` 

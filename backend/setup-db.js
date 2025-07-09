@@ -22,6 +22,19 @@ async function setupDatabase() {
     // Execute the SQL
     await pool.query(sql);
     
+    // Add provider and provider_id columns if not exist
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='provider') THEN
+          ALTER TABLE users ADD COLUMN provider VARCHAR(50);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='provider_id') THEN
+          ALTER TABLE users ADD COLUMN provider_id VARCHAR(100);
+        END IF;
+      END$$;
+    `);
+    
     console.log('Database setup completed successfully!');
     
     // Test the connection

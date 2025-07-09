@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { UserIcon, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -8,7 +8,8 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <header className="bg-white shadow">
@@ -56,6 +57,14 @@ export const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
               <span className="ml-2 text-sm text-gray-700">
                 {user?.email || 'User'}
               </span>
+              {user && (
+                <button
+                  onClick={() => { signOut(); navigate('/login'); }}
+                  className="ml-4 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+                >
+                  Logout
+                </button>
+              )}
             </div>
           </div>
         </div>

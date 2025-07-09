@@ -1,52 +1,87 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { jwtDecode, JwtPayload } from 'jwt-decode';
+
+interface User {
+  id: string;
+  email: string;
+}
 
 interface AuthContextType {
-  session: any | null;
-  user: any | null;
+  user: User | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: () => void;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user data for development
-const mockUser = {
-  id: '1',
-  email: 'user@example.com',
-  user_metadata: {
-    avatar_url: null
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+function getUserFromToken(token: string | null): User | null {
+  if (!token) return null;
+  try {
+    const decoded = jwtDecode<JwtPayload & { id: string; email: string }>(token);
+    if (decoded && decoded.id && decoded.email) {
+      return { id: decoded.id, email: decoded.email };
+    }
+    return null;
+  } catch {
+    return null;
   }
-};
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [session, setSession] = useState<any | null>({ user: mockUser });
-  const [user, setUser] = useState<any | null>(mockUser);
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Authentication is disabled - always set user as authenticated
+    const token = localStorage.getItem('jwt');
+    const user = getUserFromToken(token);
+    setUser(user);
     setLoading(false);
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    // Authentication disabled - do nothing
-    console.log('Login disabled for development');
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      if (!res.ok) throw new Error('Invalid credentials');
+      const data = await res.json();
+      localStorage.setItem('jwt', data.token);
+      setUser(getUserFromToken(data.token));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signUp = async (email: string, password: string) => {
-    // Authentication disabled - do nothing
-    console.log('Signup disabled for development');
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      if (!res.ok) throw new Error('Signup failed');
+      const data = await res.json();
+      localStorage.setItem('jwt', data.token);
+      setUser(getUserFromToken(data.token));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const signOut = async () => {
-    // Authentication disabled - do nothing
-    console.log('Logout disabled for development');
+  const signOut = () => {
+    localStorage.removeItem('jwt');
+    setUser(null);
   };
 
   const value = {
-    session,
     user,
     signIn,
     signUp,

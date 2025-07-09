@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -83,6 +85,23 @@ export const Login: React.FC = () => {
             </button>
           </div>
         </form>
+        {/* Social Login Buttons */}
+        <div className="mt-6 flex flex-col gap-2">
+          <button
+            onClick={() => window.location.href = `${API_URL}/auth/google`}
+            className="w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-100 font-medium shadow-sm"
+          >
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5 mr-2" />
+            Login with Google
+          </button>
+          <button
+            onClick={() => window.location.href = `${API_URL}/auth/facebook`}
+            className="w-full flex items-center justify-center py-2 px-4 border border-blue-600 rounded-md bg-blue-600 text-white hover:bg-blue-700 font-medium shadow-sm"
+          >
+            <img src="https://www.svgrepo.com/show/475700/facebook-color.svg" alt="Facebook" className="w-5 h-5 mr-2 bg-white rounded-full" />
+            Login with Facebook
+          </button>
+        </div>
         {/* Add signup link below the form */}
         <div className="mt-4 text-center">
           <span className="text-gray-600 text-sm">Don't have an account? </span>

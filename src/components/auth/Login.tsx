@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://aicoach-production-d965.up.railway.app';
+const API_URL = import.meta.env.VITE_API_URL || 'https://aicoach-production-d965.up.railway.app/api';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');

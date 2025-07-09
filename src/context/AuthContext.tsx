@@ -16,7 +16,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://aicoach-production-d965.up.railway.app';
+const API_URL = import.meta.env.VITE_API_URL || 'https://aicoach-production-d965.up.railway.app/api';
 
 function getUserFromToken(token: string | null): User | null {
   if (!token) return null;

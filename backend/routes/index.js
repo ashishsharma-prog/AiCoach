@@ -7,7 +7,7 @@ const healthRoutes = require('./health');
 
 // Mount routes
 router.use('/plans', plansRoutes);
-router.use('/plans/:planId/steps', stepsRoutes);
+router.use('/steps', stepsRoutes); // Simplified mounting to avoid conflicts
 router.use('/health', healthRoutes);
 
 module.exports = router; 

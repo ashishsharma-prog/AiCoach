@@ -94,13 +94,13 @@ export const Login: React.FC = () => {
             <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5 mr-2" />
             Login with Google
           </button>
-          <button
+          {/* <button
             onClick={() => window.location.href = `${API_URL}/auth/facebook`}
             className="w-full flex items-center justify-center py-2 px-4 border border-blue-600 rounded-md bg-blue-600 text-white hover:bg-blue-700 font-medium shadow-sm"
           >
             <img src="https://www.svgrepo.com/show/475700/facebook-color.svg" alt="Facebook" className="w-5 h-5 mr-2 bg-white rounded-full" />
             Login with Facebook
-          </button>
+          </button> */}
         </div>
         {/* Add signup link below the form */}
         <div className="mt-4 text-center">

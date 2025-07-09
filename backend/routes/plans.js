@@ -8,7 +8,7 @@ router.use(authenticateJWT);
 
 // ===== PLANS API ROUTES =====
 
-// Get all plans
+// Get all plans for the authenticated user
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -29,9 +29,10 @@ router.get('/', async (req, res) => {
              ) as plan_steps
       FROM plans p
       LEFT JOIN plan_steps ps ON p.id = ps.plan_id
+      WHERE p.user_id = $1
       GROUP BY p.id
       ORDER BY p.created_at DESC
-    `);
+    `, [req.user.id]);
 
     res.json(result.rows);
   } catch (error) {

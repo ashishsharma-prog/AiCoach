@@ -2,7 +2,18 @@ import { API_URL } from '../constant';
 
 export const getPlans = async () => {
   try {
-    const response = await fetch(`${API_URL}/plans`);
+    const token = localStorage.getItem('jwt');
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_URL}/plans`, {
+      headers,
+    });
     console.log(response,'response')
 
     if (!response.ok) {

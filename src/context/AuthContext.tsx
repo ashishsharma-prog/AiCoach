@@ -17,7 +17,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL_VAR = import.meta.env.VITE_API_URL || AUTH_API_URL;
+const API_URL_VAR = 'https://agile-spirit-production.up.railway.app';
 
 function getUserFromToken(token: string | null): User | null {
   if (!token) return null;

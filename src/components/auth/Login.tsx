@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { AUTH_API_URL } from '../../constant';
 
-const API_URL_VAR = import.meta.env.VITE_API_URL || AUTH_API_URL;
+const API_URL_VAR = 'https://agile-spirit-production.up.railway.app';
 
 
 export const Login: React.FC = () => {

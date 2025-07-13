@@ -6,7 +6,11 @@ const bcrypt = require('bcrypt');
 const { pool } = require('../config/database');
 
 // Google OAuth
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google', passport.authenticate('google', { 
+  scope: ['profile', 'email'],
+  accessType: 'offline',
+  prompt: 'consent'
+}));
 
 router.get('/google/callback', passport.authenticate('google', { session: false, failureRedirect: '/login' }),
   (req, res) => {

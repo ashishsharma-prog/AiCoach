@@ -48,7 +48,10 @@ async function findOrCreateSocialUser({ provider, providerId, name, email }) {
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: '/auth/google/callback',
+  callbackURL: process.env.NODE_ENV === 'production' 
+    ? 'https://agile-spirit-production.up.railway.app/auth/google/callback'
+    : 'https://agile-spirit-production.up.railway.app/auth/google/callback',
+  scope: ['profile', 'email'],
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     const user = await findOrCreateSocialUser({

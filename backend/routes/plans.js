@@ -202,6 +202,42 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// ===== NESTED STEPS ROUTES =====
+
+// Update plan step completion status
+router.patch('/:planId/steps/:stepId', async (req, res) => {
+  const { planId, stepId } = req.params;
+  const { is_completed } = req.body;
+  
+  try {
+    // First verify the plan belongs to the authenticated user
+    const planCheck = await pool.query(
+      'SELECT id FROM plans WHERE id = $1 AND user_id = $2',
+      [planId, req.user.id]
+    );
+    
+    if (planCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Plan not found or access denied' });
+    }
+    
+    const result = await pool.query(
+      `UPDATE plan_steps 
+       SET is_completed = $1, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $2 AND plan_id = $3 RETURNING *`,
+      [is_completed, stepId, planId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Plan step not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating plan step:', error);
+    res.status(500).json({ error: 'Failed to update plan step', details: error.message });
+  }
+});
+
 // ===== END PLANS API ROUTES =====
 
 module.exports = router; 

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, AlertCircle } from 'lucide-react';
-import { getPlanById } from '../lib/api';
-import { API_URL } from '../constant';
+import { getPlanById, updatePlanStep } from '../lib/api';
 // import { getPlanById, updatePlanStep } from '../services/planService';
 
 interface PlanStep {
@@ -76,17 +75,7 @@ const FullPlan: React.FC = () => {
       });
 
       // Update in database
-      const response = await fetch(`${API_URL}/plans/${planId}/steps/${stepId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ is_completed: isCompleted })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update step status');
-      }
+      await updatePlanStep(planId, stepId, isCompleted);
 
     } catch (err) {
       console.error('Failed to update step status', err);
@@ -112,7 +101,7 @@ const FullPlan: React.FC = () => {
         month: 'short',
         day: 'numeric'
       });
-    } catch (error) {
+    } catch {
       return 'Invalid date';
     }
   };
